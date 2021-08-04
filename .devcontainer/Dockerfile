@@ -19,24 +19,18 @@ ARG USER_GID=$USER_UID
 
 
 # copy the stup scripts to the container
-COPY library-scripts/*.sh /scripts/
-COPY local-scripts/*.sh /scripts/
+COPY script-library/*.sh /scripts/
 
 # install selected components
 # many scripts take optional parameters
 # see the script header for details of each
-RUN export DEBIAN_FRONTEND=noninteractive \
-  && apt-get update \
+RUN export DEBIAN_FRONTEND=noninteractive apt-get update \
   # order matters for the next 4 scripts
   # uncomment this line if you're using a base image that is not from vscode/devcontainers
   #&& /bin/bash /scripts/common-debian.sh \
   && /bin/bash /scripts/docker-in-docker-debian.sh \
   && /bin/bash /scripts/kubectl-helm-debian.sh \
   && /bin/bash /scripts/kind-k3d-debian.sh \
-  # Optional components
-  # uncomment any you want to install
-  #&& bash /scripts/azcli-debian.sh \
-  #&& bash /scripts/github-debian.sh \
   # set welcome message
   && echo "👋 Welcome to Codespaces! You are on a custom image defined in your devcontainer.json file.\n" > /usr/local/etc/vscode-dev-containers/first-run-notice.txt \
   && echo "🔍 To explore VS Code to its fullest, search using the Command Palette (Cmd/Ctrl + Shift + P)\n" >> /usr/local/etc/vscode-dev-containers/first-run-notice.txt \
