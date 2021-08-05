@@ -9,6 +9,8 @@ on:
 
 env:
   CONTAINER_REGISTRY: demoregistrry.azurecr.io
+  RG_NAME: bryan_demo
+  CLUSTER_NAME: bryandemocluster
   image_name: hello-kubernetes
   image_version: 1.7
 jobs:
@@ -37,3 +39,29 @@ jobs:
             --build-arg IMAGE_CREATE_DATE="`date -u +"%Y-%m-%dT%H:%M:%SZ"`" \
             --build-arg IMAGE_SOURCE_REVISION="`git rev-parse HEAD`"
           docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ env.image_version }}
+  deploy_app:
+    needs: [build_app_image]
+    runs-on: ubuntu-latest
+    environment: demo
+    steps:
+      - uses: azure/k8s-actions/aks-set-context@master
+        with:
+          creds: "${{ secrets.AZURE_CREDENTIALS }}" # Azure credentials
+          resource-group-name: ${{ env.RG_NAME }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+        id: login
+      - uses: azure/k8s-actions/k8s-create-secret@master
+        with:
+          container-registry-url: ${{ env.CONTAINER_REGISTRY }}
+          container-registry-username: ${{ secrets.ACR_USERNAME }}
+          container-registry-password: ${{ secrets.ACR_PASSWORD }}
+          secret-name: demo-k8s-secret
+
+      - uses: azure/k8s-actions/k8s-deploy@master
+        with:
+          manifests: |
+            yaml/demo.yaml
+          images: |
+            ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ env.image_version }}
+          imagepullsecrets: |
+            demo-k8s-secret
