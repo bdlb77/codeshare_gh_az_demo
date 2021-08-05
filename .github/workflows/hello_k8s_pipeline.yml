@@ -44,6 +44,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: demo
     steps:
+      - uses: actions/checkout@v2
+
       - uses: Azure/aks-set-context@v1
         with:
           creds: "${{ secrets.AZURE_CREDENTIALS }}" # Azure credentials
