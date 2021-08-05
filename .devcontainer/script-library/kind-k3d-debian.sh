@@ -79,51 +79,6 @@ chmod 755 ./k9s/k9s
 mv ./k9s/k9s /usr/local/bin/k9s
 rm -rf k9s.tar.gz k9s
 
-echo "Installing FluxCD ..."
-
-FLUX_VERSION=$(basename "$(curl -fsSL -o /dev/null -w "%{url_effective}" https://github.com/fluxcd/flux/releases/latest)")
-
-curl -Lo /usr/local/bin/fluxctl https://github.com/fluxcd/flux/releases/download/${FLUX_VERSION}/fluxctl_linux_${ARCHITECTURE}
-chmod 755 /usr/local/bin/fluxctl
-
-echo "Installing Istio ..."
-
-# remove istio directories
-rm -rf istio*
-rm -rf /usr/local/istio
-
-# install istio
-curl -L https://istio.io/downloadIstio | sh -
-mv istio* istio
-
-chmod -R 755 istio
-cp istio/tools/_istioctl /home/$USERNAME/.oh-my-zsh/completions
-cp istio/tools/istioctl.bash /etc/bash_completion.d
-
-chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
-
-mv istio /usr/local
-
-echo "Installing httpie ..."
-
-apt-get -y install --no-install-recommends python3 python3-pip
-
-pip3 install --upgrade pip setuptools httpie
-
-echo "Installing jmespath ..."
-
-JP_VERSION=$(basename "$(curl -fsSL -o /dev/null -w "%{url_effective}" https://github.com/jmespath/jp/releases/latest)")
-curl -Lo /usr/local/bin/jp https://github.com/jmespath/jp/releases/download/${JP_VERSION}/jp-linux-${ARCHITECTURE}
-chmod +x /usr/local/bin/jp
-
-echo "Creating directories ..."
-mkdir -p /grafana
-chown -R 472:472 /grafana
-mkdir -p /prometheus
-chown -R 65534:65534 /prometheus
-
-echo "Updating config ..."
-echo -e 'export PATH=$PATH:$HOME/.dotnet/tools:/usr/local/istio/bin' | tee -a /etc/zsh/zshrc >> /etc/bash.bashrc
 
 echo -e "alias k='kubectl'" | tee -a /etc/zsh/zshrc >> /etc/bash.bashrc
 echo -e "alias kga='kubectl get all'" | tee -a /etc/zsh/zshrc >> /etc/bash.bashrc

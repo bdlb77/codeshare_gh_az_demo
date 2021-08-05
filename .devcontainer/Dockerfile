@@ -6,6 +6,8 @@
 # [Choice] Node.js version: 16, 14, 12
 ARG VARIANT=16
 FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:${VARIANT}
+
+
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -18,29 +20,33 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 
-# copy the stup scripts to the container
-COPY library-scripts/*.sh /scripts/
-COPY local-scripts/*.sh /scripts/
+
+COPY script-library/*.sh /tmp/scripts/
 
 # install selected components
 # many scripts take optional parameters
 # see the script header for details of each
-RUN export DEBIAN_FRONTEND=noninteractive \
-  && apt-get update \
-  # order matters for the next 4 scripts
-  # uncomment this line if you're using a base image that is not from vscode/devcontainers
-  #&& /bin/bash /scripts/common-debian.sh \
-  && /bin/bash /scripts/docker-in-docker-debian.sh \
-  && /bin/bash /scripts/kubectl-helm-debian.sh \
-  && /bin/bash /scripts/kind-k3d-debian.sh \
-  # Optional components
-  # uncomment any you want to install
-  #&& bash /scripts/azcli-debian.sh \
-  #&& bash /scripts/github-debian.sh \
-  # set welcome message
-  && echo "👋 Welcome to Codespaces! You are on a custom image defined in your devcontainer.json file.\n" > /usr/local/etc/vscode-dev-containers/first-run-notice.txt \
-  && echo "🔍 To explore VS Code to its fullest, search using the Command Palette (Cmd/Ctrl + Shift + P)\n" >> /usr/local/etc/vscode-dev-containers/first-run-notice.txt \
-  && echo "run 'make all' to build a kind cluster in Codespaces\n\n" >> /usr/local/etc/vscode-dev-containers/first-run-notice.txt
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
+  && /bin/bash /tmp/scripts/docker-in-docker-debian.sh \
+  && /bin/bash /tmp/scripts/azcli-debian.sh \
+  && /bin/bash /tmp/scripts/kubectl-helm-debian.sh \
+  && /bin/bash /tmp/scripts/kind-k3d-debian.sh \
+  && /bin/bash /tmp/scripts/github-debian.sh
+
+
+# Switch back to dialog for any ad-hoc use of apt-get
+ENV DEBIAN_FRONTEND=dialog
+
+# docker socket required for Docker in Docker
+VOLUME [ "/var/lib/docker" ]
+
+# Setting the ENTRYPOINT to docker-init.sh will start up the Docker Engine
+# inside the container "overrideCommand": false is set in devcontainer.json.
+# The script will also execute CMD if you need to alter startup behaviors.
+ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
+CMD [ "sleep", "infinity" ]
+
+
 
 # Configure apt and install packages
 RUN apt-get update \
@@ -78,18 +84,4 @@ RUN apt-get update \
   && apt-get autoremove -y \
   && apt-get clean -y \
   && rm -rf /var/lib/apt/lists/*
-
-
-
-# Switch back to dialog for any ad-hoc use of apt-get
-ENV DEBIAN_FRONTEND=dialog
-
-# docker socket required for Docker in Docker
-VOLUME [ "/var/lib/docker" ]
-
-# Setting the ENTRYPOINT to docker-init.sh will start up the Docker Engine
-# inside the container "overrideCommand": false is set in devcontainer.json.
-# The script will also execute CMD if you need to alter startup behaviors.
-ENTRYPOINT [ "/usr/local/share/docker-init.sh" ]
-CMD [ "sleep", "infinity" ]
 
