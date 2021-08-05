@@ -18,15 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build and Push  Docker image
-        run: |
-          docker build app \
-            --file Dockerfile \
-            --tag "${{env.image_name}}:${{env.image_version}}" \
-            --build-arg IMAGE_VERSION=${{env.image_version}}" \
-            --build-arg IMAGE_CREATE_DATE="`date -u +"%Y-%m-%dT%H:%M:%SZ"`" \
-            --build-arg IMAGE_SOURCE_REVISION="`git rev-parse HEAD`"
-
       - name: Azure Container Registry Login
         uses: Azure/docker-login@v1
         with:
