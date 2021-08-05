@@ -41,8 +41,8 @@ jobs:
         run: |
           docker build app \
             --file Dockerfile \
-            --tag "${{env.image_name}}:${{env.image_version}}" \
-            --build-arg IMAGE_VERSION=${{env.image_version}}" \
+            --tag ${{env.image_name}}:${{env.image_version}} \
+            --build-arg IMAGE_VERSION=${{env.image_version}} \
             --build-arg IMAGE_CREATE_DATE="`date -u +"%Y-%m-%dT%H:%M:%SZ"`" \
             --build-arg IMAGE_SOURCE_REVISION="`git rev-parse HEAD`"
           docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ env.image_version }}
