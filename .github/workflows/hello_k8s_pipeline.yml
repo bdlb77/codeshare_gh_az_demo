@@ -64,6 +64,7 @@ jobs:
         with:
           manifests: |
             yaml/demo.yaml
+            yaml/aks/svc.yaml
           images: |
             ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ env.image_version }}
           imagepullsecrets: |
