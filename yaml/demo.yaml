@@ -19,17 +19,4 @@ spec:
             - containerPort: 8080
           env:
             - name: MESSAGE
-              value: I just deployed this on Kubernetes!
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: hello-kubernetes-custom
-spec:
-  type: NodePort
-  selector:
-    app: hello-kubernetes-custom
-  ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30080
+              value: I just deployed this on Codespaces!

@@ -1,0 +1,71 @@
+name: Hello Kubernetes CI Pipeline
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CONTAINER_REGISTRY: demoregistrry.azurecr.io
+  RG_NAME: bryan_demo
+  CLUSTER_NAME: bryandemocluster
+  image_name: hello-kubernetes
+  image_version: 1.7
+jobs:
+  build_app_image:
+    environment: demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Azure Container Registry Login
+        uses: Azure/docker-login@v1
+        with:
+          # Container registry username
+          username: ${{ secrets.ACR_USERNAME }}
+          # Container registry password
+          password: ${{ secrets.ACR_PASSWORD }}
+          # Container registry server url
+          login-server: ${{env.CONTAINER_REGISTRY}}
+
+      - name: Build and Push  Docker image
+        run: |
+          docker build app \
+            --file Dockerfile \
+            --tag ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{env.image_version}} \
+            --build-arg IMAGE_VERSION=${{env.image_version}} \
+            --build-arg IMAGE_CREATE_DATE="`date -u +"%Y-%m-%dT%H:%M:%SZ"`" \
+            --build-arg IMAGE_SOURCE_REVISION="`git rev-parse HEAD`"
+          docker push ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ env.image_version }}
+  deploy_app:
+    needs: [build_app_image]
+    runs-on: ubuntu-latest
+    environment: demo
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: Azure/aks-set-context@v1
+        with:
+          creds: "${{ secrets.AZURE_CREDENTIALS }}" # Azure credentials
+          resource-group: ${{ env.RG_NAME }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+        id: login
+
+      - uses: Azure/k8s-create-secret@v1
+        with:
+          container-registry-url: ${{ env.CONTAINER_REGISTRY }}
+          container-registry-username: ${{ secrets.ACR_USERNAME }}
+          container-registry-password: ${{ secrets.ACR_PASSWORD }}
+          secret-name: demo-k8s-secret
+
+      - uses: Azure/k8s-deploy@v1.4
+        with:
+          manifests: |
+            yaml/demo.yaml
+            yaml/aks/svc.yaml
+          images: |
+            ${{env.CONTAINER_REGISTRY}}/${{env.image_name}}:${{ env.image_version }}
+          imagepullsecrets: |
+            demo-k8s-secret
